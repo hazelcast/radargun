@@ -14,9 +14,7 @@
         <join>
             <multicast enabled="false"/>
             <tcp-ip enabled="true">
-                <member>10.0.0.178</member>
-                <member>10.0.0.114</member>
-                <member>10.0.0.126</member>
+                <member></member>
             </tcp-ip>
         </join>
     </network>

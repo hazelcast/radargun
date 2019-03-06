@@ -1,9 +1,17 @@
 package org.radargun.util;
 
-import org.radargun.traits.Debugable;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -12,6 +20,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.radargun.stages.cache.test.CacheInvocations.Get;
+import org.radargun.stages.cache.test.CacheInvocations.Put;
+import org.radargun.stages.cache.test.CacheInvocations.Remove;
+import org.radargun.stages.test.Invocation;
+import org.radargun.traits.Debugable;
 
 /**
  * @author Matej Cimbora
@@ -22,6 +36,7 @@ public class CacheTraitRepository extends CoreTraitRepository {
       Map<Class<?>, Object> traitMap = new HashMap<>(CoreTraitRepository.getAllTraits());
       ConcurrentHashMap concurrentHashMap = new ConcurrentHashMap();
       traitMap.put(org.radargun.traits.BasicOperations.class, new BasicOperations(new BasicOperationsCache(concurrentHashMap)));
+      traitMap.put(org.radargun.traits.PipelinedOperations.class, new PipelinedOperations(new PipelinedOperationsCache((concurrentHashMap))));
       traitMap.put(org.radargun.traits.BulkOperations.class, new BulkOperations(new BulkOperationsCache(concurrentHashMap)));
       traitMap.put(org.radargun.traits.ConditionalOperations.class, new ConditionalOperations(new ConditionalOperations.ConditionalOperationsCache(concurrentHashMap)));
       traitMap.put(org.radargun.traits.Iterable.class, new Iterable<>(concurrentHashMap));
@@ -44,6 +59,52 @@ public class CacheTraitRepository extends CoreTraitRepository {
       @Override
       public <K, V> Cache<K, V> getCache(String cacheName) {
          return cache;
+      }
+   }
+
+   public static class PipelinedOperations implements org.radargun.traits.PipelinedOperations {
+
+      private final PipelinedOperationsCache cache;
+
+      public PipelinedOperations(PipelinedOperationsCache cache) {
+         this.cache = cache;
+      }
+
+      @Override
+      public <K, V> Cache<K, V> getCache(String cacheName) {
+         return cache;
+      }
+   }
+
+   public static class PipelinedOperationsCache<K, V> extends BasicOperationsCache<K, V> implements PipelinedOperations.Cache<K, V> {
+
+      public PipelinedOperationsCache() {
+         super();
+      }
+
+      public PipelinedOperationsCache(ConcurrentHashMap<K, V> cache) {
+         super(cache);
+      }
+
+      @Override
+      public Collection<V> executePipeline(List<Invocation> operations) {
+         Collection<V> result = new ArrayList<>();
+         for (Invocation operation: operations) {
+            if (operation instanceof Get) {
+               Get<K, V> get = (Get) operation;
+               result.add(cache.get(get.getKey()));
+            } else if (operation instanceof Put) {
+               Put<K, V> put = (Put) operation;
+               result.add(cache.put(put.getKey(), put.getValue()));
+            } else if (operation instanceof Remove) {
+               Remove<K, V> remove = (Remove) operation;
+               result.add(cache.remove(remove.getKey()));
+            } else {
+               throw new IllegalArgumentException("Unsupported operation: " + operation.getClass());
+            }
+         }
+
+         return result;
       }
    }
 

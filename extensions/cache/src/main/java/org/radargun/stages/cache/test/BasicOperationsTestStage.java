@@ -1,6 +1,7 @@
 package org.radargun.stages.cache.test;
 
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.radargun.Operation;
 import org.radargun.config.Namespace;
@@ -99,13 +100,31 @@ public class BasicOperationsTestStage extends CacheOperationsTestStage {
          if (operation == BasicOperations.GET) {
             invocation = new CacheInvocations.Get(cache, key);
          } else if (operation == BasicOperations.PUT) {
-            invocation = new CacheInvocations.Put(cache, key, valueGenerator.generateValue(key, entrySize.next(random), random));
+            int size;
+            if (entrySize != null && entrySizeRange == null) {
+               size = entrySize.next(random);
+            } else if (entrySize == null && entrySizeRange != null) {
+               size = entrySizeRange.next(ThreadLocalRandom.current());
+            } else {
+               throw new IllegalArgumentException("No entrySize configured. Please configure either entrySize or entrySizeRange property.");
+            }
+
+            invocation = new CacheInvocations.Put(cache, key, valueGenerator.generateValue(key, size, random));
          } else if (operation == BasicOperations.REMOVE) {
             invocation = new CacheInvocations.Remove(cache, key);
          } else if (operation == BasicOperations.CONTAINS_KEY) {
             invocation = new CacheInvocations.ContainsKey(cache, key);
          } else if (operation == BasicOperations.GET_AND_PUT) {
-            invocation = new CacheInvocations.GetAndPut(cache, key, valueGenerator.generateValue(key, entrySize.next(random), random));
+            int size;
+            if (entrySize != null && entrySizeRange == null) {
+               size = entrySize.next(random);
+            } else if (entrySize == null && entrySizeRange != null) {
+               size = entrySizeRange.next(ThreadLocalRandom.current());
+            } else {
+               throw new IllegalArgumentException("No entrySize configured. Please configure either entrySize or entrySizeRange property.");
+            }
+
+            invocation = new CacheInvocations.GetAndPut(cache, key, valueGenerator.generateValue(key, size, random));
          } else if (operation == BasicOperations.GET_AND_REMOVE) {
             invocation = new CacheInvocations.GetAndRemove(cache, key);
          } else throw new IllegalArgumentException(operation.name);

@@ -1,14 +1,18 @@
-package org.radargun.service.redis;
+package org.radargun.service.redis.jedis;
 
+import java.util.Collection;
+import java.util.List;
 
+import org.radargun.stages.test.Invocation;
 import org.radargun.traits.BasicOperations;
+import org.radargun.traits.PipelinedOperations;
 import redis.clients.jedis.JedisCluster;
 
-public class RedisBasicOperations implements BasicOperations {
+public class JedisBasicOperations implements BasicOperations {
 
-   private RedisService redisService;
+   private JedisService redisService;
 
-   public RedisBasicOperations(RedisService redisService) {
+   public JedisBasicOperations(JedisService redisService) {
       this.redisService = redisService;
    }
 
@@ -18,7 +22,7 @@ public class RedisBasicOperations implements BasicOperations {
       return new RedisCacheAdapter(redisService.getJedisCluster());
    }
 
-   private class RedisCacheAdapter<K, V> implements BasicOperations.Cache<byte[], byte[]> {
+   private class RedisCacheAdapter<K, V> implements PipelinedOperations.Cache<byte[], byte[]> {
       private JedisCluster jedisCluster;
 
       public RedisCacheAdapter(JedisCluster jedisCluster) {
@@ -67,5 +71,9 @@ public class RedisBasicOperations implements BasicOperations {
          redisService.clearJedisCluster();
       }
 
+      @Override
+      public Collection executePipeline(List<Invocation> operations) {
+         throw new UnsupportedOperationException("Pipelining with JedisCluster is currently not supported. See: https://github.com/xetorthio/jedis/pull/1455");
+      }
    }
 }

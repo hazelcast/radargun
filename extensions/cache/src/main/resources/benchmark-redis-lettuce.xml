@@ -11,11 +11,9 @@
    <configurations>
       <config name="redis">
          <setup group="client" plugin="redis">
-            <jedis xmlns="urn:radargun:plugins:redis:3.0" >
-               <!-- Add the Redis servers addresses separated by comma -->
-               <servers></servers>
-               <max-pool-size>8</max-pool-size>
-            </jedis>
+            <lettuce xmlns="urn:radargun:plugins:redis:3.0" >
+               <server></server>
+            </lettuce>
          </setup>
       </config>
    </configurations>
@@ -25,13 +23,14 @@
                 xmlns:cache="urn:radargun:stages:cache:3.0">
 
       <define var="numberOfEntries" value="4000000" />
-      <define var="entrySize" value="1000" />
+      <define var="entrySizeFrom" value="100" />
+      <define var="entrySizeTo" value="10000" />
       <define var="numberOfThreads" value="64" />
 
       <jvm-monitor-start />
       <service-start groups="client"/>
 
-      <cache:load groups="client" num-entries="${numberOfEntries}" entry-size="${entrySize}" num-threads="${numberOfThreads}" log-period="10000">
+      <cache:load groups="client" num-entries="${numberOfEntries}" entry-size-range="${entrySizeFrom};${entrySizeTo}" num-threads="${numberOfThreads}" log-period="10000">
          <cache:key-generator>
             <cache:byte-array-key />
          </cache:key-generator>
@@ -40,19 +39,13 @@
          </cache:value-generator>
       </cache:load>
 
-      <!-- hack to stop the connections of the previously used Jedis clients, cleaning up JedisPool -->
-      <cache:clear />
-
-      <cache:basic-operations-test groups="client" test-name="warmup" num-threads-per-node="${numberOfThreads}" duration="${warmup.duration:1m}" get-ratio="4" put-ratio="1">
+      <cache:basic-operations-test groups="client" test-name="warmup" entry-size-range="${entrySizeFrom};${entrySizeTo}" num-threads-per-node="${numberOfThreads}" duration="${warmup.duration:1m}" get-ratio="4" put-ratio="1">
          <cache:key-selector>
             <cache:concurrent-keys total-entries="${numberOfEntries}"/>
          </cache:key-selector>
       </cache:basic-operations-test>
 
-      <!-- hack to stop the connections of the previously used Jedis clients, cleaning up JedisPool -->
-      <cache:clear />
-
-      <cache:basic-operations-test groups="client" test-name="stress-test" duration="${test.duration:5m}" num-threads-per-node="${numberOfThreads}"  get-ratio="4" put-ratio="1">
+      <cache:basic-operations-test groups="client" test-name="stress-test"  entry-size-range="${entrySizeFrom};${entrySizeTo}" duration="${test.duration:3m}" num-threads-per-node="${numberOfThreads}"  get-ratio="4" put-ratio="1">
          <cache:key-selector>
             <cache:concurrent-keys total-entries="${numberOfEntries}"/>
          </cache:key-selector>

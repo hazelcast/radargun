@@ -16,7 +16,8 @@ Test using MiltimapCacheOperations
 > contains-value-ratio (**optional**) - Ratio of CONTAINS_VALUE requests. Default is 0.  
 > cycle-time (**optional**) - Intended time between each request. Default is 0.  
 > duration (**optional**) - Benchmark duration. You have to set either this or 'totalNumOperations'.  
-> entry-size (**optional**) - Size of the value in bytes. Default is 1000.  
+> entry-size (**optional**) - Size of the value in bytes.  
+> entry-size-range (**optional**) - Range of the entry size in format 'min;max'  
 > exit-on-failure (**optional**) - If true, then the benchmark stops when the stage returns an error. If false, then the stages in the current scenario are skipped, and the next scenario starts executing. Default is false.  
 > get-ratio (**optional**) - Ratio of GET requests. Default is 4.  
 > groups (**optional**) - Specifies in which groups this stage should actively run. The result set is intersection of specified slaves, groups and roles. Default is all groups.  

@@ -19,8 +19,6 @@
                 <hazelcast-client xmlns="urn:radargun:plugins:hazelcast310:3.0">
                     <!--Address of one server is enough to connect to the cluster, but it's recommended to specify all of them-->
                     <servers></servers>
-                    <servers></servers>
-                    <servers></servers>
                 </hazelcast-client>
             </setup>
 

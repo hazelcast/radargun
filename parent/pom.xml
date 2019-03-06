@@ -339,10 +339,12 @@
             <module>../plugins/hazelcast38</module>
             <module>../plugins/hazelcast39</module>
             <module>../plugins/hazelcast310</module>
+            <module>../plugins/hazelcast311</module>
+            <module>../plugins/hazelcast312</module>
          </modules>
          <properties>
-            <plugins.hazelcast-latest>hazelcast39</plugins.hazelcast-latest>
-            <plugins.hazelcast>hazelcast2,hazelcast36,hazelcast37,hazelcast38,hazelcast39,hazelcast310,${plugins.hazelcast-latest}</plugins.hazelcast>
+            <plugins.hazelcast-latest>hazelcast312</plugins.hazelcast-latest>
+            <plugins.hazelcast>hazelcast2,hazelcast36,hazelcast37,hazelcast38,hazelcast39,hazelcast310,hazelcast311,hazelcast312,${plugins.hazelcast-latest}</plugins.hazelcast>
          </properties>
       </profile>
       <profile>
@@ -353,11 +355,14 @@
             </property>
          </activation>
          <modules>
+            <module>../plugins/hazelcast-enterprise39</module>
             <module>../plugins/hazelcast-enterprise310</module>
+            <module>../plugins/hazelcast-enterprise311</module>
+            <module>../plugins/hazelcast-enterprise312</module>
          </modules>
          <properties>
-            <plugins.hazelcast-enterprise-latest>hazelcast-enterprise310</plugins.hazelcast-enterprise-latest>
-            <plugins.hazelcast-enterprise>hazelcast-enterprise310,${plugins.hazelcast-enterprise-latest}</plugins.hazelcast-enterprise>
+            <plugins.hazelcast-enterprise-latest>hazelcast-enterprise312</plugins.hazelcast-enterprise-latest>
+            <plugins.hazelcast-enterprise>hazelcast-enterprise39,hazelcast-enterprise310,hazelcast-enterprise311,hazelcast-enterprise312,${plugins.hazelcast-enterprise-latest}</plugins.hazelcast-enterprise>
          </properties>
       </profile>
       <profile>

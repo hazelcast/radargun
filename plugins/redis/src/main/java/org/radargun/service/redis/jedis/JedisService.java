@@ -1,6 +1,5 @@
-package org.radargun.service.redis;
+package org.radargun.service.redis.jedis;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,7 +14,7 @@ import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
 
 @Service(doc = "Redis clustered service")
-public class RedisService implements Lifecycle {
+public class JedisService implements Lifecycle {
 
    protected final Log log = LogFactory.getLog(getClass());
 
@@ -29,8 +28,8 @@ public class RedisService implements Lifecycle {
    private JedisCluster jedisCluster;
 
    @ProvidesTrait
-   public RedisBasicOperations getBasicOperations() {
-      return new RedisBasicOperations(this);
+   public JedisBasicOperations getBasicOperations() {
+      return new JedisBasicOperations(this);
    }
 
    @ProvidesTrait
@@ -69,11 +68,7 @@ public class RedisService implements Lifecycle {
    }
 
    public void clearJedisCluster() {
-      try {
-         jedisCluster.close();
-      } catch (IOException e) {
-         throw new RuntimeException(e);
-      }
+      jedisCluster.close();
       createJedisCluster();
    }
 
