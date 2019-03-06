@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<hazelcast xsi:schemaLocation="http://www.hazelcast.com/schema/config
+        http://www.hazelcast.com/schema/config/hazelcast-config-3.12.xsd"
+           xmlns="http://www.hazelcast.com/schema/config"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <group>
+        <name>dev</name>
+        <password>dev-pass</password>
+    </group>
+
+    <license-key><!-- Your Hazelcast EE license key --></license-key>
+
+    <network>
+        <port port-count="200" auto-increment="true">5701</port>
+        <join>
+            <multicast enabled="false"/>
+            <tcp-ip enabled="true">
+                <!-- Add the member IP addresses here -->
+                <member>127.0.0.1:5701</member>
+                <member>127.0.0.1:5702</member>
+            </tcp-ip>
+        </join>
+    </network>
+
+    <map name="default*">
+    </map>
+
+</hazelcast>

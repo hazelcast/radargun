@@ -17,6 +17,8 @@ import org.radargun.traits.BulkOperations;
 import org.radargun.traits.InjectTrait;
 import org.radargun.traits.Transactional;
 import org.radargun.utils.Fuzzy;
+import org.radargun.utils.RangeFuzzy;
+import org.radargun.utils.RangeFuzzy.RangeFuzzyConverter;
 import org.radargun.utils.TimeConverter;
 import org.radargun.utils.TimeService;
 import org.radargun.utils.Utils;
@@ -34,7 +36,10 @@ public class LoadStage extends org.radargun.stages.test.LoadStage {
    protected long keyIdOffset = 0;
 
    @Property(doc = "Size of the value in bytes. Default is 1000.", converter = Fuzzy.IntegerConverter.class)
-   protected Fuzzy<Integer> entrySize = Fuzzy.uniform(1000);
+   protected Fuzzy<Integer> entrySize = null;
+
+   @Property(doc = "Range of the entry size in format 'min;max'", converter = RangeFuzzyConverter.class)
+   protected RangeFuzzy entrySizeRange = null;
 
    @Property(doc = "Generator of keys (transforms key ID into key object). Default is 'string'.",
       complexConverter = KeyGenerator.ComplexConverter.class)
@@ -256,7 +261,14 @@ public class LoadStage extends org.radargun.stages.test.LoadStage {
 
       @Override
       protected boolean loadDataUnit() {
-         int size = entrySize.next(random);
+         int size;
+         if (entrySize != null && entrySizeRange == null) {
+            size = entrySize.next(random);
+         } else if (entrySize == null && entrySizeRange != null) {
+            size = entrySizeRange.next(threadLocalRandom);
+         } else {
+            throw new IllegalArgumentException("No entrySize configured. Please configure either entrySize or entrySizeRange property.");
+         }
          long currentKeyIndex = loaderIds.currentKeyIndex();
          delayRequest(start, TimeService.nanoTime(), currentKeyIndex);
          long keyId = loaderIds.next();

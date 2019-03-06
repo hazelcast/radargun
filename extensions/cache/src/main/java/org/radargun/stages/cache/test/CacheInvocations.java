@@ -3,6 +3,8 @@ package org.radargun.stages.cache.test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,6 +13,7 @@ import org.radargun.stages.test.Invocation;
 import org.radargun.traits.BasicOperations;
 import org.radargun.traits.BulkOperations;
 import org.radargun.traits.ConditionalOperations;
+import org.radargun.traits.PipelinedOperations;
 import org.radargun.traits.StreamingOperations;
 import org.radargun.traits.TemporalOperations;
 
@@ -49,6 +52,14 @@ public class CacheInvocations {
       public Operation txOperation() {
          return TX;
       }
+
+      public K getKey() {
+         return key;
+      }
+
+      public V getValue() {
+         return value;
+      }
    }
 
    public static final class Put<K, V> implements Invocation<Void> {
@@ -77,6 +88,14 @@ public class CacheInvocations {
       @Override
       public Operation txOperation() {
          return TX;
+      }
+
+      public K getKey() {
+         return key;
+      }
+
+      public V getValue() {
+         return value;
       }
    }
 
@@ -167,6 +186,10 @@ public class CacheInvocations {
       @Override
       public Operation txOperation() {
          return TX;
+      }
+
+      public K getKey() {
+         return key;
       }
    }
 
@@ -520,10 +543,10 @@ public class CacheInvocations {
       private static final Operation NATIVE_TX = BulkOperations.GET_ALL_NATIVE.derive("tx");
       private static final Operation ASYNC_TX = BulkOperations.GET_ALL_ASYNC.derive("tx");
       private final BulkOperations.Cache<K, V> cache;
-      private final Set<K> keys;
+      private final java.util.Set<K> keys;
       private final boolean async;
 
-      public GetAll(BulkOperations.Cache<K, V> cache, boolean async, Set<K> keys) {
+      public GetAll(BulkOperations.Cache<K, V> cache, boolean async, java.util.Set<K> keys) {
          this.cache = cache;
          this.async = async;
          this.keys = keys;
@@ -579,10 +602,10 @@ public class CacheInvocations {
       private static final Operation NATIVE_TX = BulkOperations.REMOVE_ALL_NATIVE.derive("tx");
       private static final Operation ASYNC_TX = BulkOperations.REMOVE_ALL_ASYNC.derive("tx");
       private final BulkOperations.Cache<K, V> cache;
-      private final Set<K> keys;
+      private final java.util.Set<K> keys;
       private final boolean async;
 
-      public RemoveAll(BulkOperations.Cache<K, V> cache, boolean async, Set<K> keys) {
+      public RemoveAll(BulkOperations.Cache<K, V> cache, boolean async, java.util.Set<K> keys) {
          this.cache = cache;
          this.async = async;
          this.keys = keys;
@@ -680,6 +703,31 @@ public class CacheInvocations {
       @Override
       public Operation txOperation() {
          return TX;
+      }
+   }
+
+   public static final class ExecutePipeline<K, V> implements Invocation<Collection<V>> {
+      private final PipelinedOperations.Cache<K, V> cache;
+      private final List<Invocation> operations;
+
+      public ExecutePipeline(PipelinedOperations.Cache<K, V> cache, List<Invocation> operations) {
+         this.cache = cache;
+         this.operations = operations;
+      }
+
+      @Override
+      public Collection<V> invoke() {
+         return cache.executePipeline(operations);
+      }
+
+      @Override
+      public Operation operation() {
+         return PipelinedOperations.EXECUTE_PIPELINE;
+      }
+
+      @Override
+      public Operation txOperation() {
+         throw new UnsupportedOperationException("TX operation is not supported for ExecutePipeline invocation.");
       }
    }
 

@@ -1,5 +1,7 @@
 package org.radargun.stages.cache.test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -7,6 +9,7 @@ import org.radargun.Operation;
 import org.radargun.config.Namespace;
 import org.radargun.config.Property;
 import org.radargun.config.Stage;
+import org.radargun.stages.cache.test.CacheInvocations.ExecutePipeline;
 import org.radargun.stages.test.Invocation;
 import org.radargun.stages.test.OperationLogic;
 import org.radargun.stages.test.OperationSelector;
@@ -15,43 +18,35 @@ import org.radargun.stages.test.Stressor;
 import org.radargun.stages.test.TestStage;
 import org.radargun.traits.BasicOperations;
 import org.radargun.traits.InjectTrait;
+import org.radargun.traits.PipelinedOperations;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Namespace(name = TestStage.NAMESPACE, deprecatedName = TestStage.DEPRECATED_NAMESPACE)
-@Stage(doc = "Test using BasicOperations")
-public class BasicOperationsTestStage extends CacheOperationsTestStage {
+@Stage(doc = "Test using PipelinedOperations")
+public class PipelinedOperationsTestStage extends CacheOperationsTestStage {
    @Property(doc = "Ratio of GET requests. Default is 4.")
    protected int getRatio = 4;
-
-   @Property(doc = "Ratio of CONTAINS requests. Default is 0.")
-   protected int containsRatio = 0;
 
    @Property(doc = "Ratio of PUT requests. Default is 1.")
    protected int putRatio = 1;
 
-   @Property(doc = "Ratio of GET_AND_PUT requests. Default is 0.")
-   protected int getAndPutRatio = 0;
-
    @Property(doc = "Ratio of REMOVE requests. Default is 0.")
    protected int removeRatio = 0;
 
-   @Property(doc = "Ratio of GET_AND_REMOVE requests. Default is 0.")
-   protected int getAndRemoveRatio = 0;
+   @Property(doc = "Size of the pipeline. Default is 5.")
+   protected int pipelineSize = 5;
 
    @InjectTrait
-   protected BasicOperations basicOperations;
+   protected PipelinedOperations pipelinedOperations;
 
    @Override
    protected OperationSelector createOperationSelector() {
       RatioOperationSelector operationSelector = new RatioOperationSelector.Builder()
          .add(BasicOperations.GET, getRatio)
-         .add(BasicOperations.CONTAINS_KEY, containsRatio)
          .add(BasicOperations.PUT, putRatio)
-         .add(BasicOperations.GET_AND_PUT, getAndPutRatio)
          .add(BasicOperations.REMOVE, removeRatio)
-         .add(BasicOperations.GET_AND_REMOVE, getAndRemoveRatio)
          .build();
 
       return operationSelector;
@@ -63,32 +58,18 @@ public class BasicOperationsTestStage extends CacheOperationsTestStage {
    }
 
    protected class Logic extends OperationLogic {
-      protected BasicOperations.Cache nonTxCache;
-      protected BasicOperations.Cache cache;
+      protected PipelinedOperations.Cache cache;
       protected KeySelector keySelector;
+
+      private List<Invocation> pipeline;
 
       @Override
       public void init(Stressor stressor) {
          super.init(stressor);
          String cacheName = cacheSelector.getCacheName(stressor.getGlobalThreadIndex());
-         this.nonTxCache = basicOperations.getCache(cacheName);
-         if (useTransactions(cacheName)) {
-            cache = new Delegates.BasicOperationsCache<>();
-         } else {
-            cache = nonTxCache;
-         }
-         stressor.setUseTransactions(useTransactions(cacheName));
+         this.cache = pipelinedOperations.getCache(cacheName);
          keySelector = getKeySelector(stressor);
-      }
-
-      @Override
-      public void transactionStarted() {
-         ((Delegates.BasicOperationsCache) cache).setDelegate(stressor.wrap(nonTxCache));
-      }
-
-      @Override
-      public void transactionEnded() {
-         ((Delegates.BasicOperationsCache) cache).setDelegate(null);
+         pipeline = new ArrayList<>(pipelineSize);
       }
 
       @Override
@@ -112,23 +93,23 @@ public class BasicOperationsTestStage extends CacheOperationsTestStage {
             invocation = new CacheInvocations.Put(cache, key, valueGenerator.generateValue(key, size, random));
          } else if (operation == BasicOperations.REMOVE) {
             invocation = new CacheInvocations.Remove(cache, key);
-         } else if (operation == BasicOperations.CONTAINS_KEY) {
-            invocation = new CacheInvocations.ContainsKey(cache, key);
-         } else if (operation == BasicOperations.GET_AND_PUT) {
-            int size;
-            if (entrySize != null && entrySizeRange == null) {
-               size = entrySize.next(random);
-            } else if (entrySize == null && entrySizeRange != null) {
-               size = entrySizeRange.next(ThreadLocalRandom.current());
-            } else {
-               throw new IllegalArgumentException("No entrySize configured. Please configure either entrySize or entrySizeRange property.");
-            }
+         } else {
+            throw new IllegalArgumentException(operation.name);
+         }
 
-            invocation = new CacheInvocations.GetAndPut(cache, key, valueGenerator.generateValue(key, size, random));
-         } else if (operation == BasicOperations.GET_AND_REMOVE) {
-            invocation = new CacheInvocations.GetAndRemove(cache, key);
-         } else throw new IllegalArgumentException(operation.name);
-         stressor.makeRequest(invocation);
+         pipeline.add(invocation);
+         if (pipeline.size() == pipelineSize) {
+            ExecutePipeline pipelineToExecute = new ExecutePipeline(cache, pipeline);
+            stressor.makeRequest(pipelineToExecute);
+            pipeline.clear();
+         } else {
+            // since Radargun records the requests ONLY when the invocation is made through stressor,
+            // that means when using pipelining, you will get the actually recorded throughput as <real throughput>/<pipeline depth>
+            // It order to hack this around, we execute empty pipeline invocation when not actually having the pipeline ready.
+            // This will distort the latency numbers and needs to be fixed, but works for throughput as PoC
+            ExecutePipeline dummyPipeline = new ExecutePipeline(cache, null);
+            stressor.makeRequest(dummyPipeline);
+         }
       }
    }
 }

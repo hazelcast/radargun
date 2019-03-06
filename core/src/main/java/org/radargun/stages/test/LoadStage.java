@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.radargun.DistStageAck;
@@ -105,6 +106,7 @@ public abstract class LoadStage extends AbstractDistStage {
 
    protected abstract class Loader extends Thread {
       protected final Random random;
+      protected final ThreadLocalRandom threadLocalRandom;
       protected final int threadIndex;
       protected Throwable throwable;
 
@@ -112,6 +114,7 @@ public abstract class LoadStage extends AbstractDistStage {
          super("Loader-" + index);
          threadIndex = slaveState.getSlaveIndex() * numThreads + index;
          random = seed == null ? new Random() : new Random(seed + threadIndex);
+         threadLocalRandom = ThreadLocalRandom.current();
       }
 
       public Exception getException() {
