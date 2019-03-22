@@ -54,7 +54,7 @@
             </cache:key-selector>
         </cache:pipelined-operations-test>
 
-        <cache:pipelined-operations-test groups="client" test-name="stress-test" entry-size-range="${entrySizeFrom};${entrySizeTo}" duration="${test.duration:3m}" num-threads-per-node="${numberOfThreads}"  get-ratio="4" put-ratio="1" pipeline-size="5">
+        <cache:pipelined-operations-test groups="client" test-name="stress-test" entry-size-range="${entrySizeFrom};${entrySizeTo}" duration="${test.duration:4m}" num-threads-per-node="${numberOfThreads}"  get-ratio="4" put-ratio="1" pipeline-size="5">
             <cache:key-selector>
                 <cache:concurrent-keys total-entries="${numberOfEntries}"/>
             </cache:key-selector>
