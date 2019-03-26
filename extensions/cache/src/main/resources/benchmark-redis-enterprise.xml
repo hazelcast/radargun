@@ -52,7 +52,7 @@
       <!-- hack to stop the connections of the previously used Jedis clients, cleaning up JedisPool -->
       <cache:clear />
 
-      <cache:basic-operations-test groups="client" test-name="stress-test" duration="${test.duration:2m}" num-threads-per-node="${numberOfThreads}"  get-ratio="4" put-ratio="1">
+      <cache:basic-operations-test groups="client" test-name="stress-test" duration="${test.duration:4m}" num-threads-per-node="${numberOfThreads}"  get-ratio="4" put-ratio="1">
          <cache:key-selector>
             <cache:concurrent-keys total-entries="${numberOfEntries}"/>
          </cache:key-selector>
