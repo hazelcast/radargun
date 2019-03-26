@@ -24,15 +24,14 @@
                 xmlns="urn:radargun:stages:core:3.0"
                 xmlns:cache="urn:radargun:stages:cache:3.0">
 
-      <define var="numberOfEntries" value="4000000" />
-      <define var="entrySizeFrom" value="100" />
-      <define var="entrySizeTo" value="10000" />
-      <define var="numberOfThreads" value="64" />
+      <define var="numberOfEntries" value="1666666" />
+      <define var="entrySize" value="1000" />
+      <define var="numberOfThreads" value="16" />
 
       <jvm-monitor-start />
       <service-start groups="client"/>
 
-      <cache:load groups="client" num-entries="${numberOfEntries}" entry-size-range="${entrySizeFrom};${entrySizeTo}" num-threads="${numberOfThreads}" log-period="10000">
+      <cache:load groups="client" num-entries="${numberOfEntries}" entry-size="${entrySize}" num-threads="${numberOfThreads}" log-period="10000">
          <cache:key-generator>
             <cache:byte-array-key />
          </cache:key-generator>
@@ -44,7 +43,7 @@
       <!-- hack to stop the connections of the previously used Jedis clients, cleaning up JedisPool -->
       <cache:clear />
 
-      <cache:basic-operations-test groups="client" test-name="warmup" entry-size-range="${entrySizeFrom};${entrySizeTo}" num-threads-per-node="${numberOfThreads}" duration="${warmup.duration:1m}" get-ratio="4" put-ratio="1">
+      <cache:basic-operations-test groups="client" test-name="warmup" entry-size="${entrySize}" num-threads-per-node="${numberOfThreads}" duration="${warmup.duration:1m}" get-ratio="4" put-ratio="1">
          <cache:key-selector>
             <cache:concurrent-keys total-entries="${numberOfEntries}"/>
          </cache:key-selector>
@@ -53,7 +52,7 @@
       <!-- hack to stop the connections of the previously used Jedis clients, cleaning up JedisPool -->
       <cache:clear />
 
-      <cache:basic-operations-test groups="client" test-name="stress-test"  entry-size-range="${entrySizeFrom};${entrySizeTo}" duration="${test.duration:3m}" num-threads-per-node="${numberOfThreads}"  get-ratio="4" put-ratio="1">
+      <cache:basic-operations-test groups="client" test-name="stress-test" entry-size="${entrySize}" duration="${test.duration:4m}" num-threads-per-node="${numberOfThreads}"  get-ratio="4" put-ratio="1">
          <cache:key-selector>
             <cache:concurrent-keys total-entries="${numberOfEntries}"/>
          </cache:key-selector>
